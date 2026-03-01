@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>QR Code Generator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#F7F8F0;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#355872;padding:20px 16px 48px;}
+.container{max-width:540px;margin:0 auto;}
+
+/* Header */
+.header{text-align:center;margin-bottom:24px;}
+.logo{width:60px;height:60px;border-radius:16px;background:#355872;border:1px solid #7AAACE;display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px;box-shadow:0 8px 24px rgba(53,88,114,0.2);}
+.logo svg{width:28px;height:28px;stroke:#F7F8F0;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+h1{font-size:26px;font-weight:800;color:#355872;margin-bottom:4px;}
+.subtitle{color:#7AAACE;font-size:13px;}
+
+/* Card */
+.card{background:#fff;border-radius:20px;border:1px solid #9CD5FF;overflow:hidden;box-shadow:0 10px 36px rgba(53,88,114,0.1);}
+
+/* Selector */
+.selector-wrap{padding:20px 20px 0;}
+.selector-label{font-size:11px;font-weight:700;color:#7AAACE;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px;}
+.custom-select{position:relative;}
+.select-btn{width:100%;padding:13px 16px;border-radius:12px;background:#F7F8F0;border:1.5px solid #9CD5FF;color:#355872;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;transition:border-color 0.2s;user-select:none;}
+.select-btn:hover{border-color:#7AAACE;}
+.select-btn.open{border-color:#355872;border-radius:12px 12px 0 0;}
+.select-btn-left{display:flex;align-items:center;gap:10px;}
+.select-btn svg.arrow{width:16px;height:16px;stroke:#7AAACE;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform 0.2s;flex-shrink:0;}
+.select-btn.open svg.arrow{transform:rotate(180deg);}
+.type-icon{width:30px;height:30px;border-radius:8px;background:#355872;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.type-icon svg{width:15px;height:15px;stroke:#F7F8F0;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.dropdown{position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid #355872;border-top:none;border-radius:0 0 14px 14px;z-index:100;max-height:280px;overflow-y:auto;display:none;box-shadow:0 12px 30px rgba(53,88,114,0.15);}
+.dropdown.open{display:block;}
+.dropdown::-webkit-scrollbar{width:4px;}
+.dropdown::-webkit-scrollbar-thumb{background:#9CD5FF;border-radius:4px;}
+.group-label{padding:10px 16px 4px;font-size:10px;font-weight:700;color:#9CD5FF;text-transform:uppercase;letter-spacing:0.8px;background:#F7F8F0;}
+.option{padding:11px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:background 0.15s;font-size:13px;font-weight:500;color:#355872;}
+.option:hover{background:#F7F8F0;}
+.option.active{background:#EBF5FF;color:#355872;font-weight:600;}
+.opt-icon{width:28px;height:28px;border-radius:7px;background:#355872;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.opt-icon svg{width:13px;height:13px;stroke:#F7F8F0;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.opt-num{font-size:10px;color:#9CD5FF;margin-left:auto;}
+
+/* Divider */
+.divider{height:1px;background:#EBF5FF;margin:18px 20px 0;}
+
+/* Form panels */
+.form-area{padding:20px;}
+.panel{display:none;}
+.panel.active{display:block;}
+.field{margin-bottom:13px;}
+.field label{display:block;font-size:11px;font-weight:700;color:#7AAACE;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px;}
+.field input,.field textarea,.field select{width:100%;padding:11px 13px;border-radius:10px;background:#F7F8F0;border:1.5px solid #9CD5FF;color:#355872;font-size:13px;outline:none;transition:border-color 0.2s;font-family:inherit;resize:none;appearance:none;}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:#355872;background:#fff;}
+.field input::placeholder,.field textarea::placeholder{color:#9CD5FF;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.hint{font-size:10px;color:#9CD5FF;margin-top:4px;}
+.row{display:flex;gap:10px;}
+.row .field{flex:1;}
+
+/* Generate btn */
+.gen-btn{width:100%;padding:14px;border-radius:12px;border:none;background:#355872;color:#F7F8F0;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 16px rgba(53,88,114,0.25);transition:all 0.15s;margin-top:4px;}
+.gen-btn:active{transform:scale(0.98);background:#2a4560;}
+.gen-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+
+/* QR output */
+.qr-section{padding:0 20px 20px;}
+.qr-box{background:#F7F8F0;border-radius:14px;border:1.5px solid #9CD5FF;padding:24px 20px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px;}
+.qr-box canvas{max-width:220px;width:100%;border-radius:8px;border:1.5px solid #7AAACE;}
+.qr-placeholder{text-align:center;}
+.qr-placeholder svg{width:50px;height:50px;stroke:#9CD5FF;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;margin-bottom:8px;}
+.qr-placeholder p{color:#9CD5FF;font-size:12px;}
+.scan-hint{font-size:11px;color:#7AAACE;margin-top:8px;}
+
+/* Action btns */
+.action-row{display:flex;gap:10px;margin-top:12px;}
+.btn-dl{flex:1;padding:12px;border-radius:10px;border:none;background:#355872;color:#F7F8F0;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.15s;box-shadow:0 3px 12px rgba(53,88,114,0.2);}
+.btn-dl:active{transform:scale(0.97);}
+.btn-dl svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.btn-cp{flex:1;padding:12px;border-radius:10px;border:1.5px solid #9CD5FF;background:#fff;color:#7AAACE;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s;}
+.btn-cp:active{transform:scale(0.97);}
+.btn-cp svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.btn-cp.copied{color:#355872;border-color:#355872;background:#F7F8F0;}
+.btn-clear{width:100%;padding:11px;border-radius:10px;border:1.5px solid #9CD5FF;background:#F7F8F0;color:#7AAACE;font-size:12px;font-weight:600;cursor:pointer;margin-top:10px;transition:all 0.2s;}
+.btn-clear:active{background:#9CD5FF;color:#355872;}
+
+.data-pre{margin-top:12px;}
+.data-pre h3{font-size:10px;font-weight:700;color:#7AAACE;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px;}
+.data-pre pre{background:#F7F8F0;border:1.5px solid #9CD5FF;border-radius:8px;padding:9px;font-size:10px;color:#7AAACE;white-space:pre-wrap;word-break:break-all;max-height:70px;overflow-y:auto;}
+
+.footer{text-align:center;margin-top:18px;color:#9CD5FF;font-size:11px;}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="header">
+  <div class="logo">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/></svg>
+  </div>
+  <h1>QR Code Generator</h1>
+  <p class="subtitle">25 types · Instant · Free · No data stored</p>
+</div>
+
+<div class="card">
+
+  <!-- Type Selector -->
+  <div class="selector-wrap">
+    <div class="selector-label">Select QR Type</div>
+    <div class="custom-select">
+      <div class="select-btn" id="selectBtn" onclick="toggleDropdown()">
+        <div class="select-btn-left">
+          <div class="type-icon" id="selectedIcon">
+            <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          </div>
+          <span id="selectedLabel">URL / Link</span>
+        </div>
+        <svg class="arrow" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="dropdown" id="dropdown">
+
+        <div class="group-label">🌐 Web & Communication</div>
+        <div class="option active" onclick="selectType('url','URL / Link','<path d=&quot;M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71&quot;/><path d=&quot;M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71&quot;/>')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>
+          URL / Link<span class="opt-num">#1</span>
+        </div>
+        <div class="option" onclick="selectType('text','Plain Text','<path d=&quot;M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z&quot;/><polyline points=&quot;14 2 14 8 20 8&quot;/><line x1=&quot;16&quot; y1=&quot;13&quot; x2=&quot;8&quot; y2=&quot;13&quot;/><line x1=&quot;16&quot; y1=&quot;17&quot; x2=&quot;8&quot; y2=&quot;17&quot;/><polyline points=&quot;10 9 9 9 8 9&quot;/>')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+          Plain Text<span class="opt-num">#3</span>
+        </div>
+        <div class="option" onclick="selectType('email','Email Composer','<path d=&quot;M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z&quot;/><polyline points=&quot;22,6 12,13 2,6&quot;/>')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+          Email Composer<span class="opt-num">#5</span>
+        </div>
+        <div class="option" onclick="selectType('sms','SMS Message','<path d=&quot;M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z&quot;/>')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+          SMS Message<span class="opt-num">#6</span>
+        </div>
+        <div class="option" onclick="selectType('call','Phone Call','<path d=&quot;M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.77 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.1a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z&quot;/>')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.77 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.1a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>
+          Phone Call<span class="opt-num">#7</span>
+        </div>
+        <div class="option" onclick="selectType('whatsapp','WhatsApp Chat','<path d=&quot;M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z&quot;/>')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div>
+          WhatsApp Chat<span class="opt-num">#8</span>
+        </div>
+
+        <div class="group-label">👤 Identity & Contact</div>
+        <div class="option" onclick="selectType('contact','Contact Card (vCard)','<path d=&quot;M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2&quot;/><circle cx=&quot;12&quot; cy=&quot;7&quot; r=&quot;4&quot;/>')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+          Contact Card (vCard)<span class="opt-num">#2</span>
+        </div>
+        <div class="option" onclick="selectType('bizcard','Digital Business Card','<rect x=&quot;2&quot; y=&quot;7&quot; width=&quot;20&quot; height=&quot;14&quot; rx=&quot;2&quot; ry=&quot;2&quot;/><path d=&quot;M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16&quot;/>')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div>
+          Digital Business Card<span class="opt-num">#25</span>
+        </div>
+        <div class="option" onclick="selectType('resume','Resume / Portfolio','<path d=&quot;M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z&quot;/><polyline points=&quot;14 2 14 8 20 8&quot;/>')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+          Resume / Portfolio<span class="opt-num">#16</span>
+        </div>
+        <div class="option" onclick="selectType('social','Social Media Profile','<path d=&quot;M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z&quot;/>')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></div>
+          Social Media Profile<span class="opt-num">#10</span>
+        </div>
+
+        <div class="group-label">💰 Payments & Finance</div>
+        <div class="option" onclick="selectType('payment','Digital Payment','<rect x=&quot;1&quot; y=&quot;4&quot; width=&quot;22&quot; height=&quot;16&quot; rx=&quot;2&quot; ry=&quot;2&quot;/><line x1=&quot;1&quot; y1=&quot;10&quot; x2=&quot;23&quot; y2=&quot;10&quot;/>')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
+          Digital Payment<span class="opt-num">#9</span>
+        </div>
+        <div class="option" onclick="selectType('crypto','Cryptocurrency Wallet','<line x1=&quot;12&quot; y1=&quot;1&quot; x2=&quot;12&quot; y2=&quot;23&quot;/><path d=&quot;M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6&quot;/>')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+          Cryptocurrency Wallet<span class="opt-num">#22</span>
+        </div>
+        <div class="option" onclick="selectType('coupon','Coupon / Discount Code','<path d=&quot;M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z&quot;/><line x1=&quot;7&quot; y1=&quot;7&quot; x2=&quot;7.01&quot; y2=&quot;7&quot;/>')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></div>
+          Coupon / Discount Code<span class="opt-num">#24</span>
+        </div>
+
+        <div class="group-label">📍 Location & Events</div>
+        <div class="option" onclick="selectType('location','Google Maps Location','<path d=&quot;M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z&quot;/><circle cx=&quot;12&quot; cy=&quot;10&quot; r=&quot;3&quot;/>')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+          Google Maps Location<span class="opt-num">#12</span>
+        </div>
+        <div class="option" onclick="selectType('calendar','Calendar Event','<rect x=&quot;3&quot; y=&quot;4&quot; width=&quot;18&quot; height=&quot;18&quot; rx=&quot;2&quot; ry=&quot;2&quot;/><line x1=&quot;16&quot; y1=&quot;2&quot; x2=&quot;16&quot; y2=&quot;6&quot;/><line x1=&quot;8&quot; y1=&quot;2&quot; x2=&quot;8&quot; y2=&quot;6&quot;/><line x1=&quot;3&quot; y1=&quot;10&quot; x2=&quot;21&quot; y2=&quot;10&quot;/>')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+          Calendar Event<span class="opt-num">#13</span>
+        </div>
+        <div class="option" onclick="selectType('ticket','Event Ticket / Entry Pass','<path d=&quot;M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2z&quot;/>')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2z"/></svg></div>
+          Event Ticket / Entry Pass<span class="opt-num">#15</span>
+        </div>
+
+        <div class="group-label">📱 Apps & Media</div>
+        <div class="option" onclick="selectType('appstore','App Store / Play Store','<rect x=&quot;5&quot; y=&quot;2&quot; width=&quot;14&quot; height=&quot;20&quot; rx=&quot;2&quot; ry=&quot;2&quot;/><line x1=&quot;12&quot; y1=&quot;18&quot; x2=&quot;12.01&quot; y2=&quot;18&quot;/>')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div>
+          App Store / Play Store<span class="opt-num">#11</span>
+        </div>
+        <div class="option" onclick="selectType('video','YouTube / Video Link','<polygon points=&quot;23 7 16 12 23 17 23 7&quot;/><rect x=&quot;1&quot; y=&quot;5&quot; width=&quot;15&quot; height=&quot;14&quot; rx=&quot;2&quot; ry=&quot;2&quot;/>')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></div>
+          YouTube / Video Link<span class="opt-num">#18</span>
+        </div>
+        <div class="option" onclick="selectType('music','Spotify / Music Playlist','<path d=&quot;M9 18V5l12-2v13&quot;/><circle cx=&quot;6&quot; cy=&quot;18&quot; r=&quot;3&quot;/><circle cx=&quot;18&quot; cy=&quot;16&quot; r=&quot;3&quot;/>')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
+          Spotify / Music Playlist<span class="opt-num">#19</span>
+        </div>
+        <div class="option" onclick="selectType('document','Document / PDF Link','<path d=&quot;M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z&quot;/><polyline points=&quot;14 2 14 8 20 8&quot;/>')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+          Document / PDF Link<span class="opt-num">#20</span>
+        </div>
+
+        <div class="group-label">🔧 Utilities & Tools</div>
+        <div class="option" onclick="selectType('wifi','Wi-Fi Password','<path d=&quot;M5 12.55a11 11 0 0 1 14.08 0&quot;/><path d=&quot;M1.42 9a16 16 0 0 1 21.16 0&quot;/><path d=&quot;M8.53 16.11a6 6 0 0 1 6.95 0&quot;/><line x1=&quot;12&quot; y1=&quot;20&quot; x2=&quot;12.01&quot; y2=&quot;20&quot;/>')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg></div>
+          Wi-Fi Password<span class="opt-num">#4</span>
+        </div>
+        <div class="option" onclick="selectType('menu','Digital Menu','<path d=&quot;M3 3h18&quot;/><path d=&quot;M3 9h18&quot;/><path d=&quot;M3 15h18&quot;/><path d=&quot;M3 21h18&quot;/>')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24"><path d="M3 3h18"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M3 21h18"/></svg></div>
+          Digital Menu<span class="opt-num">#14</span>
+        </div>
+        <div class="option" onclick="selectType('product','Product Information','<path d=&quot;M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z&quot;/><line x1=&quot;3&quot; y1=&quot;6&quot; x2=&quot;21&quot; y2=&quot;6&quot;/><path d=&quot;M16 10a4 4 0 0 1-8 0&quot;/>')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div>
+          Product Information<span class="opt-num">#17</span>
+        </div>
+        <div class="option" onclick="selectType('auth','2FA Setup (Authenticator)','<rect x=&quot;3&quot; y=&quot;11&quot; width=&quot;18&quot; height=&quot;11&quot; rx=&quot;2&quot; ry=&quot;2&quot;/><path d=&quot;M7 11V7a5 5 0 0 1 10 0v4&quot;/>')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+          2FA Setup (Authenticator)<span class="opt-num">#21</span>
+        </div>
+        <div class="option" onclick="selectType('feedback','Feedback / Survey Form','<path d=&quot;M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7&quot;/><path d=&quot;M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z&quot;/>')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
+          Feedback / Survey Form<span class="opt-num">#23</span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Form Panels -->
+  <div class="form-area">
+
+    <div id="p-url" class="panel active">
+      <div class="field"><label>Website URL</label><input type="url" id="f-url" placeholder="https://example.com"/><p class="hint">https:// added automatically if missing</p></div>
+    </div>
+
+    <div id="p-text" class="panel">
+      <div class="field"><label>Text Content</label><textarea id="f-text" rows="4" placeholder="Enter any text here..."></textarea></div>
+    </div>
+
+    <div id="p-contact" class="panel">
+      <div class="grid2">
+        <div class="field"><label>First Name</label><input type="text" id="f-cfn" placeholder="John"/></div>
+        <div class="field"><label>Last Name</label><input type="text" id="f-cln" placeholder="Doe"/></div>
+      </div>
+      <div class="field"><label>Phone</label><input type="tel" id="f-cph" placeholder="+1 (555) 000-0000"/></div>
+      <div class="field"><label>Email</label><input type="email" id="f-cem" placeholder="john@example.com"/></div>
+      <div class="field"><label>Organization</label><input type="text" id="f-cor" placeholder="Company Inc."/></div>
+      <div class="field"><label>Website</label><input type="url" id="f-cwe" placeholder="https://example.com"/></div>
+    </div>
+
+    <div id="p-wifi" class="panel">
+      <div class="field"><label>Network Name (SSID)</label><input type="text" id="f-wss" placeholder="MyWiFiNetwork"/></div>
+      <div class="field"><label>Password</label><input type="text" id="f-wpa" placeholder="password123"/></div>
+      <div class="field"><label>Security Type</label>
+        <select id="f-wtp"><option value="WPA">WPA/WPA2</option><option value="WEP">WEP</option><option value="nopass">None (Open)</option></select>
+      </div>
+    </div>
+
+    <div id="p-email" class="panel">
+      <div class="field"><label>To (Email Address)</label><input type="email" id="f-eto" placeholder="recipient@example.com"/></div>
+      <div class="field"><label>Subject</label><input type="text" id="f-esu" placeholder="Hello!"/></div>
+      <div class="field"><label>Message Body</label><textarea id="f-ebo" rows="3" placeholder="Write your message..."></textarea></div>
+    </div>
+
+    <div id="p-sms" class="panel">
+      <div class="field"><label>Phone Number</label><input type="tel" id="f-sph" placeholder="+1 (555) 000-0000"/></div>
+      <div class="field"><label>Message</label><textarea id="f-sms" rows="3" placeholder="Your message..."></textarea></div>
+    </div>
+
+    <div id="p-call" class="panel">
+      <div class="field"><label>Phone Number</label><input type="tel" id="f-cll" placeholder="+1 (555) 000-0000"/></div>
+    </div>
+
+    <div id="p-whatsapp" class="panel">
+      <div class="field"><label>Phone Number (with country code)</label><input type="tel" id="f-wap" placeholder="+1 (555) 000-0000"/></div>
+      <div class="field"><label>Pre-filled Message (optional)</label><textarea id="f-wam" rows="3" placeholder="Hi there!"></textarea></div>
+    </div>
+
+    <div id="p-payment" class="panel">
+      <div class="field"><label>Payment Link / UPI ID</label><input type="text" id="f-pay" placeholder="upi://pay?pa=name@upi or https://paypal.me/..."/></div>
+      <div class="field"><label>Amount (optional)</label><input type="text" id="f-pam" placeholder="10.00"/></div>
+      <div class="field"><label>Note (optional)</label><input type="text" id="f-pno" placeholder="Payment for services"/></div>
+    </div>
+
+    <div id="p-social" class="panel">
+      <div class="field"><label>Platform</label>
+        <select id="f-spl"><option value="">Select Platform</option><option value="instagram">Instagram</option><option value="twitter">Twitter / X</option><option value="linkedin">LinkedIn</option><option value="youtube">YouTube</option><option value="tiktok">TikTok</option><option value="snapchat">Snapchat</option></select>
+      </div>
+      <div class="field"><label>Profile URL</label><input type="url" id="f-spu" placeholder="https://instagram.com/username"/></div>
+    </div>
+
+    <div id="p-appstore" class="panel">
+      <div class="field"><label>App Name</label><input type="text" id="f-apn" placeholder="My App"/></div>
+      <div class="field"><label>App Store Link</label><input type="url" id="f-apl" placeholder="https://apps.apple.com/..."/></div>
+      <div class="field"><label>Play Store Link (optional)</label><input type="url" id="f-apg" placeholder="https://play.google.com/..."/></div>
+    </div>
+
+    <div id="p-location" class="panel">
+      <div class="field"><label>Address or Place Name</label><input type="text" id="f-loc" placeholder="1600 Amphitheatre Pkwy, Mountain View"/></div>
+      <div class="grid2">
+        <div class="field"><label>Latitude (optional)</label><input type="text" id="f-lat" placeholder="37.4220"/></div>
+        <div class="field"><label>Longitude (optional)</label><input type="text" id="f-lng" placeholder="-122.0841"/></div>
+      </div>
+    </div>
+
+    <div id="p-calendar" class="panel">
+      <div class="field"><label>Event Title</label><input type="text" id="f-evt" placeholder="Team Meeting"/></div>
+      <div class="grid2">
+        <div class="field"><label>Start Date & Time</label><input type="datetime-local" id="f-est"/></div>
+        <div class="field"><label>End Date & Time</label><input type="datetime-local" id="f-eet"/></div>
+      </div>
+      <div class="field"><label>Location (optional)</label><input type="text" id="f-elc" placeholder="Office / Zoom link"/></div>
+      <div class="field"><label>Description (optional)</label><textarea id="f-ede" rows="2" placeholder="Event details..."></textarea></div>
+    </div>
+
+    <div id="p-menu" class="panel">
+      <div class="field"><label>Menu URL</label><input type="url" id="f-mnu" placeholder="https://restaurant.com/menu"/></div>
+      <div class="field"><label>Restaurant Name (optional)</label><input type="text" id="f-mnm" placeholder="The Grand Bistro"/></div>
+    </div>
+
+    <div id="p-ticket" class="panel">
+      <div class="field"><label>Event Name</label><input type="text" id="f-ten" placeholder="Music Festival 2025"/></div>
+      <div class="field"><label>Ticket ID / Code</label><input type="text" id="f-tid" placeholder="TKT-00123"/></div>
+      <div class="field"><label>Seat / Gate Info</label><input type="text" id="f-tse" placeholder="Gate A, Row 5, Seat 12"/></div>
+      <div class="field"><label>Date & Time</label><input type="datetime-local" id="f-tdt"/></div>
+    </div>
+
+    <div id="p-resume" class="panel">
+      <div class="field"><label>Portfolio / Resume URL</label><input type="url" id="f-res" placeholder="https://myportfolio.com"/></div>
+      <div class="field"><label>Your Name</label><input type="text" id="f-rnm" placeholder="Jane Smith"/></div>
+      <div class="field"><label>Job Title</label><input type="text" id="f-rjt" placeholder="UI/UX Designer"/></div>
+    </div>
+
+    <div id="p-product" class="panel">
+      <div class="field"><label>Product Name</label><input type="text" id="f-prn" placeholder="Wireless Earbuds Pro"/></div>
+      <div class="field"><label>Product URL</label><input type="url" id="f-pru" placeholder="https://store.com/product"/></div>
+      <div class="field"><label>SKU / Barcode (optional)</label><input type="text" id="f-prs" placeholder="SKU-001234"/></div>
+    </div>
+
+    <div id="p-video" class="panel">
+      <div class="field"><label>Video URL</label><input type="url" id="f-vid" placeholder="https://youtube.com/watch?v=..."/></div>
+      <div class="field"><label>Video Title (optional)</label><input type="text" id="f-vit" placeholder="My Tutorial Video"/></div>
+    </div>
+
+    <div id="p-music" class="panel">
+      <div class="field"><label>Playlist / Track URL</label><input type="url" id="f-mus" placeholder="https://open.spotify.com/playlist/..."/></div>
+      <div class="field"><label>Playlist Name (optional)</label><input type="text" id="f-mun" placeholder="My Chill Vibes"/></div>
+    </div>
+
+    <div id="p-document" class="panel">
+      <div class="field"><label>Document / PDF URL</label><input type="url" id="f-doc" placeholder="https://drive.google.com/file/..."/></div>
+      <div class="field"><label>Document Title (optional)</label><input type="text" id="f-dot" placeholder="Annual Report 2025"/></div>
+    </div>
+
+    <div id="p-auth" class="panel">
+      <div class="field"><label>Account / Issuer Name</label><input type="text" id="f-ain" placeholder="MyApp"/></div>
+      <div class="field"><label>Username / Email</label><input type="text" id="f-aiu" placeholder="user@example.com"/></div>
+      <div class="field"><label>Secret Key</label><input type="text" id="f-ais" placeholder="JBSWY3DPEHPK3PXP"/></div>
+    </div>
+
+    <div id="p-crypto" class="panel">
+      <div class="field"><label>Coin Type</label>
+        <select id="f-crt"><option value="bitcoin">Bitcoin (BTC)</option><option value="ethereum">Ethereum (ETH)</option><option value="litecoin">Litecoin (LTC)</option><option value="other">Other</option></select>
+      </div>
+      <div class="field"><label>Wallet Address</label><input type="text" id="f-cra" placeholder="1A2b3C4d5E6f7G8h9I..."/></div>
+      <div class="field"><label>Amount (optional)</label><input type="text" id="f-crm" placeholder="0.001"/></div>
+    </div>
+
+    <div id="p-feedback" class="panel">
+      <div class="field"><label>Survey / Form URL</label><input type="url" id="f-fbu" placeholder="https://forms.google.com/..."/></div>
+      <div class="field"><label>Form Title (optional)</label><input type="text" id="f-fbt" placeholder="Customer Satisfaction Survey"/></div>
+    </div>
+
+    <div id="p-bizcard" class="panel">
+      <div class="field"><label>Full Name</label><input type="text" id="f-bcn" placeholder="John Doe"/></div>
+      <div class="field"><label>Job Title</label><input type="text" id="f-bcj" placeholder="Senior Designer"/></div>
+      <div class="field"><label>Company</label><input type="text" id="f-bcc" placeholder="Acme Corp"/></div>
+      <div class="grid2">
+        <div class="field"><label>Phone</label><input type="tel" id="f-bcp" placeholder="+1 555 0000"/></div>
+        <div class="field"><label>Email</label><input type="email" id="f-bce" placeholder="john@acme.com"/></div>
+      </div>
+      <div class="field"><label>Website</label><input type="url" id="f-bcw" placeholder="https://acme.com"/></div>
+      <div class="field"><label>Address</label><input type="text" id="f-bca" placeholder="123 Main St, NYC"/></div>
+    </div>
+
+    <div id="p-coupon" class="panel">
+      <div class="field"><label>Brand / Store Name</label><input type="text" id="f-cpb" placeholder="SuperStore"/></div>
+      <div class="field"><label>Discount Code</label><input type="text" id="f-cpc" placeholder="SAVE20"/></div>
+      <div class="field"><label>Discount Value</label><input type="text" id="f-cpv" placeholder="20% off or $10 off"/></div>
+      <div class="field"><label>Expiry Date</label><input type="date" id="f-cpe"/></div>
+    </div>
+
+    <button class="gen-btn" onclick="generate()">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/></svg>
+      Generate QR Code
+    </button>
+    <button class="btn-clear" onclick="clearAll()">Clear Fields</button>
+  </div>
+
+  <!-- QR Output -->
+  <div class="qr-section">
+    <div class="qr-box">
+      <div class="qr-placeholder" id="qr-ph">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/></svg>
+        <p>Your QR code will appear here</p>
+      </div>
+      <canvas id="qr-canvas" style="display:none;"></canvas>
+      <p class="scan-hint" id="qr-hint" style="display:none;">Scan with your device camera</p>
+    </div>
+    <div id="qr-actions" style="display:none;">
+      <div class="action-row">
+        <button class="btn-dl" onclick="downloadQR()">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download PNG
+        </button>
+        <button class="btn-cp" id="copy-btn" onclick="copyData()">
+          <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copy Data
+        </button>
+      </div>
+      <div class="data-pre">
+        <h3>Encoded Data</h3>
+        <pre id="data-preview"></pre>
+      </div>
+    </div>
+  </div>
+
+</div>
+<p class="footer">25 QR Types · Instant Generation · No Data Stored · Free to Use</p>
+</div>
+
+<script>
+var currentType='url', currentData='';
+
+function toggleDropdown(){
+  var btn=document.getElementById('selectBtn');
+  var dd=document.getElementById('dropdown');
+  btn.classList.toggle('open');
+  dd.classList.toggle('open');
+}
+
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.custom-select')){
+    document.getElementById('selectBtn').classList.remove('open');
+    document.getElementById('dropdown').classList.remove('open');
+  }
+});
+
+function selectType(type, label, iconPath){
+  currentType=type;
+  document.getElementById('selectedLabel').textContent=label;
+  document.getElementById('selectedIcon').innerHTML='<svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:#F7F8F0;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;">'+iconPath+'</svg>';
+  document.querySelectorAll('.option').forEach(function(o){o.classList.remove('active');});
+  event.currentTarget.classList.add('active');
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+  var panel=document.getElementById('p-'+type);
+  if(panel) panel.classList.add('active');
+  document.getElementById('selectBtn').classList.remove('open');
+  document.getElementById('dropdown').classList.remove('open');
+  resetOutput();
+}
+
+function v(id){var el=document.getElementById(id);return el?el.value.trim():'';}
+
+function getData(){
+  var t=currentType;
+  if(t==='url'){var u=v('f-url');if(!u)return'';return(u.startsWith('http')?u:'https://'+u);}
+  if(t==='text')return v('f-text');
+  if(t==='contact'){var fn=v('f-cfn'),ln=v('f-cln'),ph=v('f-cph'),em=v('f-cem'),or=v('f-cor'),we=v('f-cwe');if(!fn&&!ln&&!ph&&!em)return'';return'BEGIN:VCARD\nVERSION:3.0\nFN:'+fn+' '+ln+'\nN:'+ln+';'+fn+';;;\nORG:'+or+'\nTEL:'+ph+'\nEMAIL:'+em+'\nURL:'+we+'\nEND:VCARD';}
+  if(t==='wifi'){var ss=v('f-wss'),pa=v('f-wpa'),tp=v('f-wtp');if(!ss)return'';return'WIFI:T:'+tp+';S:'+ss+';P:'+pa+';;';}
+  if(t==='email'){var to=v('f-eto'),su=v('f-esu'),bo=v('f-ebo');if(!to)return'';return'mailto:'+to+'?subject='+encodeURIComponent(su)+'&body='+encodeURIComponent(bo);}
+  if(t==='sms'){var sp=v('f-sph'),sm=v('f-sms');if(!sp)return'';return'sms:'+sp+'?body='+encodeURIComponent(sm);}
+  if(t==='call'){var cl=v('f-cll');if(!cl)return'';return'tel:'+cl;}
+  if(t==='whatsapp'){var wp=v('f-wap').replace(/\D/g,''),wm=v('f-wam');if(!wp)return'';return'https://wa.me/'+wp+(wm?'?text='+encodeURIComponent(wm):'');}
+  if(t==='payment'){var py=v('f-pay'),pa2=v('f-pam'),pn=v('f-pno');if(!py)return'';return py+(pa2?'&am='+pa2:'')+(pn?'&tn='+encodeURIComponent(pn):'');}
+  if(t==='social'){var su2=v('f-spu');if(!su2)return'';return su2;}
+  if(t==='appstore'){var al=v('f-apl'),ag=v('f-apg');return al||ag||'';}
+  if(t==='location'){var lc=v('f-loc'),la=v('f-lat'),ln2=v('f-lng');if(la&&ln2)return'geo:'+la+','+ln2;if(lc)return'https://maps.google.com/?q='+encodeURIComponent(lc);return'';}
+  if(t==='calendar'){var en=v('f-evt'),es=v('f-est'),ee=v('f-eet'),el=v('f-elc'),ed=v('f-ede');if(!en)return'';var fmt=function(d){return d.replace(/[-:T]/g,'').slice(0,15)+'Z';};return'BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nSUMMARY:'+en+'\nDTSTART:'+fmt(es||new Date().toISOString())+'\nDTEND:'+fmt(ee||new Date().toISOString())+'\nLOCATION:'+el+'\nDESCRIPTION:'+ed+'\nEND:VEVENT\nEND:VCALENDAR';}
+  if(t==='menu'){var mu=v('f-mnu');if(!mu)return'';return mu;}
+  if(t==='ticket'){var te=v('f-ten'),ti=v('f-tid'),ts=v('f-tse'),td=v('f-tdt');if(!te||!ti)return'';return'EVENT:'+te+'\nTICKET:'+ti+'\nSEAT:'+ts+'\nDATE:'+td;}
+  if(t==='resume'){var ru=v('f-res');if(!ru)return'';return ru;}
+  if(t==='product'){var pu=v('f-pru');if(!pu)return'';return pu;}
+  if(t==='video'){var vu=v('f-vid');if(!vu)return'';return vu;}
+  if(t==='music'){var mu2=v('f-mus');if(!mu2)return'';return mu2;}
+  if(t==='document'){var du=v('f-doc');if(!du)return'';return du;}
+  if(t==='auth'){var an=v('f-ain'),au=v('f-aiu'),as=v('f-ais');if(!as)return'';return'otpauth://totp/'+encodeURIComponent(an)+':'+encodeURIComponent(au)+'?secret='+as+'&issuer='+encodeURIComponent(an);}
+  if(t==='crypto'){var ct=v('f-crt'),ca=v('f-cra'),cm=v('f-crm');if(!ca)return'';return ct+':'+ca+(cm?'?amount='+cm:'');}
+  if(t==='feedback'){var fu=v('f-fbu');if(!fu)return'';return fu;}
+  if(t==='bizcard'){var bn=v('f-bcn'),bj=v('f-bcj'),bc=v('f-bcc'),bp=v('f-bcp'),be=v('f-bce'),bw=v('f-bcw'),ba=v('f-bca');if(!bn)return'';return'BEGIN:VCARD\nVERSION:3.0\nFN:'+bn+'\nTITLE:'+bj+'\nORG:'+bc+'\nTEL:'+bp+'\nEMAIL:'+be+'\nURL:'+bw+'\nADR:;;'+ba+';;;;\nEND:VCARD';}
+  if(t==='coupon'){var cb=v('f-cpb'),cc=v('f-cpc'),cv=v('f-cpv'),ce=v('f-cpe');if(!cc)return'';return'COUPON:'+cb+'\nCODE:'+cc+'\nDISCOUNT:'+cv+'\nEXPIRY:'+ce;}
+  return'';
+}
+
+function generate(){
+  currentData=getData();
+  var canvas=document.getElementById('qr-canvas');
+  var ph=document.getElementById('qr-ph');
+  var hint=document.getElementById('qr-hint');
+  var actions=document.getElementById('qr-actions');
+  var preview=document.getElementById('data-preview');
+  if(!currentData){alert('Please fill in the required fields.');return;}
+  try{
+    new QRious({element:canvas,value:currentData,size:240,background:'#F7F8F0',foreground:'#355872',level:'M'});
+    canvas.style.display='block';ph.style.display='none';hint.style.display='block';actions.style.display='block';
+    preview.textContent=currentData;
+  }catch(e){console.error(e);}
+}
+
+function resetOutput(){
+  currentData='';
+  document.getElementById('qr-canvas').style.display='none';
+  document.getElementById('qr-ph').style.display='block';
+  document.getElementById('qr-hint').style.display='none';
+  document.getElementById('qr-actions').style.display='none';
+}
+
+function downloadQR(){
+  if(!currentData)return;
+  var a=document.createElement('a');a.download='qrcode.png';
+  a.href=document.getElementById('qr-canvas').toDataURL('image/png');a.click();
+}
+
+function copyData(){
+  if(!currentData)return;
+  navigator.clipboard.writeText(currentData).then(function(){
+    var btn=document.getElementById('copy-btn');
+    btn.classList.add('copied');
+    btn.innerHTML='<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><polyline points="20 6 9 17 4 12"/></svg> Copied!';
+    setTimeout(function(){
+      btn.classList.remove('copied');
+      btn.innerHTML='<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy Data';
+    },2000);
+  });
+}
+
+function clearAll(){
+  document.querySelectorAll('.form-area input,.form-area textarea,.form-area select').forEach(function(el){
+    if(el.tagName==='SELECT')el.selectedIndex=0;else el.value='';
+  });
+  resetOutput();
+}
+</script>
+</body>
+</html>
+
